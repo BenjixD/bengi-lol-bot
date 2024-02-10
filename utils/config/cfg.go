@@ -13,8 +13,10 @@ const (
 )
 
 type BengiLolBotConfig struct {
-	Environment Env    `mapstructure:"ENVIRONMENT"`
-	ApiKey      string `mapstructure:"API_KEY"`
+	Environment   Env    `mapstructure:"ENVIRONMENT"`
+	DiscordApiKey string `mapstructure:"DISCORD_API_KEY"`
+	AiApiKey      string `mapstructure:"AI_API_KEY"`
+	RiotApiKey    string `mapstructure:"RIOT_API_KEY"`
 }
 
 func Init() (config *BengiLolBotConfig, err error) {
@@ -22,7 +24,9 @@ func Init() (config *BengiLolBotConfig, err error) {
 	// Note: Unmarshal needs to bind envs to read from envar
 	// https://github.com/spf13/viper/issues/761
 	v.SetDefault("ENVIRONMENT", Development)
-	v.SetDefault("API_KEY", "")
+	v.SetDefault("DISCORD_API_KEY", "")
+	v.SetDefault("AI_API_KEY", "")
+	v.SetDefault("RIOT_API_KEY", "")
 	v.AutomaticEnv()
 
 	err = v.Unmarshal(&config)

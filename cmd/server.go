@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 
-	config "github.com/BenjixD/bengi-lol-bot/utils"
+	"github.com/BenjixD/bengi-lol-bot/svc"
+	config "github.com/BenjixD/bengi-lol-bot/utils/config"
+	"github.com/BenjixD/bengi-lol-bot/utils/log"
 	"go.uber.org/zap"
 )
 
@@ -24,16 +27,7 @@ func init() {
 		panic(fmt.Sprintf("Could not read configuration: %v", err))
 	}
 
-	switch env := cfg.Environment; env {
-	case config.Development:
-		logger, err = zap.NewDevelopment()
-	case config.Staging:
-		logger, err = zap.NewDevelopment()
-	case config.Production:
-		logger, err = zap.NewProduction()
-	default:
-		panic("cannot initialize logger, unknown environment found")
-	}
+	logger, err = log.NewLogger(cfg.Environment)
 	if err != nil {
 		panic("failed to initialize logger")
 	}
@@ -45,6 +39,11 @@ func init() {
 }
 
 func main() {
-	logger.Debug(fmt.Sprintf("%v", cfg.Environment))
-	logger.Debug(fmt.Sprintf("%v", cfg.ApiKey))
+	riotClient, _ := svc.NewRiotApiClient(cfg.RiotApiKey)
+	res, err := riotClient.GetUserFromRiotID(context.TODO(), &svc.GetUserFromRiotIDRequest{
+		GameName: "alierujah",
+		TagLine:  "na1",
+	})
+	fmt.Println(res)
+	fmt.Println(err)
 }
