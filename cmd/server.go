@@ -46,4 +46,14 @@ func main() {
 	})
 	fmt.Println(res)
 	fmt.Println(err)
+
+	res2, _ := riotClient.GetMatchesByPuuid(context.TODO(), &svc.GetMatchesByPuuidRequest{
+		Puuid: res.Puuid,
+	})
+	fmt.Println(res2)
+
+	res3, _ := riotClient.GetMatchTimelineByMatchID(context.TODO(), &svc.GetMatchTimelimeByMatchIDRequest{
+		MatchID: (*res2)[0],
+	})
+	fmt.Println(res3)
 }

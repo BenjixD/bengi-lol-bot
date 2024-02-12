@@ -34,9 +34,24 @@ type GetMatchesByPuuidRequest struct {
 
 type GetMatchesByPuuidResponse []string
 
+type GetMatchTimelimeByMatchIDRequest struct {
+	MatchID string
+}
+
+// TODO: Benji: Schema-fy the response?
+type GetMatchTimelineByMatchIDResponse map[string]interface{}
+
+type GetMatchSummaryByMatchIDRequest struct {
+	MatchID string
+}
+
+type GetMatchSummaryByMatchIDResponse map[string]interface{}
+
 type RiotApiClientInterface interface {
 	GetUserFromRiotID(ctx context.Context, req *GetUserFromRiotIDRequest) (*GetUserFromRiotIDResponse, error)
 	GetMatchesByPuuid(ctx context.Context, req *GetMatchesByPuuidRequest) (*GetMatchesByPuuidResponse, error)
+	GetMatchSummaryByMatchID(ctx context.Context, req *GetMatchSummaryByMatchIDRequest) (*GetMatchSummaryByMatchIDResponse, error)
+	GetMatchTimelineByMatchID(ctx context.Context, req GetMatchTimelimeByMatchIDRequest) (*GetMatchTimelineByMatchIDResponse, error)
 }
 
 type RiotApiClient struct {
@@ -83,7 +98,7 @@ func (c *RiotApiClient) GetMatchesByPuuid(ctx context.Context, req *GetMatchesBy
 		return nil, err
 	}
 
-	var queryParams map[string]string
+	queryParams := map[string]string{}
 	for k, v := range reflections.StructToMap(req._Query) {
 		// Note: Since Query Params are either str* or str, we need
 		// to get the string value referenced by the ptr, not the actual
@@ -96,14 +111,59 @@ func (c *RiotApiClient) GetMatchesByPuuid(ctx context.Context, req *GetMatchesBy
 		}
 	}
 
-	res, err := c.client.R().Get(sanitizedPath.Path)
-	c.client.R().SetQueryParams(queryParams)
+	res, err := c.client.R().SetQueryParams(queryParams).Get(sanitizedPath.Path)
 	if err != nil {
 		return nil, err
 	}
 
 	if res.IsSuccess() {
 		var apiRes GetMatchesByPuuidResponse
+		err := json.Unmarshal(res.Body(), &apiRes)
+		if err != nil {
+			return nil, err
+		}
+		return &apiRes, nil
+	}
+	return nil, fmt.Errorf("unexpected code %d", res.StatusCode())
+}
+
+func (c *RiotApiClient) GetMatchSummaryByMatchID(ctx context.Context, req *GetMatchSummaryByMatchIDRequest) (*GetMatchSummaryByMatchIDResponse, error) {
+	path := fmt.Sprintf("lol/match/v5/matches/%s", req.MatchID)
+	sanitizedPath, err := url.Parse(path)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := c.client.R().Get(sanitizedPath.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.IsSuccess() {
+		var apiRes GetMatchSummaryByMatchIDResponse
+		err := json.Unmarshal(res.Body(), &apiRes)
+		if err != nil {
+			return nil, err
+		}
+		return &apiRes, nil
+	}
+	return nil, fmt.Errorf("unexpected code %d", res.StatusCode())
+}
+
+func (c *RiotApiClient) GetMatchTimelineByMatchID(ctx context.Context, req *GetMatchTimelimeByMatchIDRequest) (*GetMatchTimelineByMatchIDResponse, error) {
+	path := fmt.Sprintf("lol/match/v5/matches/%s/timeline", req.MatchID)
+	sanitizedPath, err := url.Parse(path)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := c.client.R().Get(sanitizedPath.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.IsSuccess() {
+		var apiRes GetMatchTimelineByMatchIDResponse
 		err := json.Unmarshal(res.Body(), &apiRes)
 		if err != nil {
 			return nil, err
